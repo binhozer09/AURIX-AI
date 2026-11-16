@@ -1,4 +1,5 @@
-const MAX_FILE_SIZE = 100 * 1024 * 1024;
+const MAX_IMAGE_SIZE = 100 * 1024 * 1024;
+const MAX_PDF_SIZE = 50 * 1024 * 1024;
 
 function send(res, status, payload) {
   res.statusCode = status;
@@ -20,8 +21,9 @@ export default async function handler(req, res) {
     const {name, mimeType, size} = req.body || {};
     const allowed = typeof mimeType === "string" && (mimeType.startsWith("image/") || mimeType === "application/pdf");
     if (!allowed) return send(res, 400, {error:"Este envio aceita imagens e PDFs."});
-    if (!Number.isFinite(size) || size <= 0 || size > MAX_FILE_SIZE) {
-      return send(res, 413, {error:"Cada imagem ou PDF pode ter no máximo 100 MB."});
+    const maxSize = mimeType === "application/pdf" ? MAX_PDF_SIZE : MAX_IMAGE_SIZE;
+    if (!Number.isFinite(size) || size <= 0 || size > maxSize) {
+      return send(res, 413, {error: mimeType === "application/pdf" ? "PDFs podem ter no máximo 50 MB." : "Imagens podem ter no máximo 100 MB."});
     }
     const response = await fetch("https://generativelanguage.googleapis.com/upload/v1beta/files", {
       method:"POST",
