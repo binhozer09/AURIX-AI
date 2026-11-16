@@ -70,7 +70,8 @@ function showTyping() {
   window.scrollTo({top: document.body.scrollHeight, behavior:"smooth"});
 }
 async function uploadFile(file) {
-  if (file.size > 100 * 1024 * 1024) throw new Error(file.name + " ultrapassa o limite de 100 MB.");
+  const maxSize = file.type === "application/pdf" ? 50 * 1024 * 1024 : 100 * 1024 * 1024;
+  if (file.size > maxSize) throw new Error(file.name + (file.type === "application/pdf" ? " ultrapassa o limite de 50 MB para PDFs." : " ultrapassa o limite de 100 MB."));
   const init = await fetch("/api/upload", {
     method: "POST",
     headers: {"Content-Type":"application/json"},
@@ -93,7 +94,8 @@ async function buildUserParts(text, files) {
   const parts = [];
   if (text) parts.push({text});
   for (const file of files) {
-    if (file.size > 100 * 1024 * 1024) throw new Error(file.name + " ultrapassa o limite de 100 MB.");
+    const maxSize = file.type === "application/pdf" ? 50 * 1024 * 1024 : 100 * 1024 * 1024;
+    if (file.size > maxSize) throw new Error(file.name + (file.type === "application/pdf" ? " ultrapassa o limite de 50 MB para PDFs." : " ultrapassa o limite de 100 MB."));
     if (file.type.startsWith("image/") || file.type === "application/pdf") {
       const uploaded = await uploadFile(file);
       parts.push({fileData:uploaded.fileData, fileName:uploaded.fileName});
