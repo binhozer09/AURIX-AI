@@ -69,24 +69,34 @@ function showTyping() {
   messages.append(row);
   window.scrollTo({top: document.body.scrollHeight, behavior:"smooth"});
 }
-function fileToPart(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onerror = () => reject(new Error("Não foi possível ler o arquivo " + file.name));
-    reader.onload = () => {
-      const result = String(reader.result || "");
-      resolve({ inlineData: { mimeType: file.type, data: result.split(",")[1] || "" } });
-    };
-    reader.readAsDataURL(file);
+async function uploadFile(file) {
+  if (file.size > 100 * 1024 * 1024) throw new Error(file.name + " ultrapassa o limite de 100 MB.");
+  const init = await fetch("/api/upload", {
+    method: "POST",
+    headers: {"Content-Type":"application/json"},
+    body: JSON.stringify({name:file.name, mimeType:file.type, size:file.size})
   });
+  const setup = await init.json().catch(() => ({}));
+  if (!init.ok || !setup.uploadUrl) throw new Error(setup.error || "Não foi possível iniciar o envio de " + file.name);
+  const uploaded = await fetch(setup.uploadUrl, {
+    method: "POST",
+    headers: {"Content-Type":"application/octet-stream", "X-Goog-Upload-Offset":"0", "X-Goog-Upload-Command":"upload, finalize"},
+    body: file
+  });
+  const result = await uploaded.json().catch(() => ({}));
+  if (!uploaded.ok || !result.file?.uri || !result.file?.name) {
+    throw new Error("O Google não concluiu o envio de " + file.name + ". Tente novamente.");
+  }
+  return {fileData:{mimeType:file.type, fileUri:result.file.uri}, fileName:result.file.name};
 }
 async function buildUserParts(text, files) {
   const parts = [];
   if (text) parts.push({text});
   for (const file of files) {
-    if (file.size > 3 * 1024 * 1024) throw new Error(file.name + " ultrapassa o limite de 3 MB.");
+    if (file.size > 100 * 1024 * 1024) throw new Error(file.name + " ultrapassa o limite de 100 MB.");
     if (file.type.startsWith("image/") || file.type === "application/pdf") {
-      parts.push(await fileToPart(file));
+      const uploaded = await uploadFile(file);
+      parts.push({fileData:uploaded.fileData, fileName:uploaded.fileName});
     } else if (file.type === "text/plain" || file.name.toLowerCase().endsWith(".txt")) {
       const content = await file.text();
       parts.push({text: "\n\nConteúdo do arquivo " + file.name + ":\n" + content.slice(0, 20000)});
