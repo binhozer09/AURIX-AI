@@ -43,7 +43,26 @@ function addMessage(role, text, files = []) {
   }
   const content = document.createElement("div");
   content.className = "message-content";
-  content.textContent = text;
+  const urlPattern = /https:\/\/[^\s<>"']+/g;
+  let lastIndex = 0;
+  for (const match of text.matchAll(urlPattern)) {
+    const raw = match[0].replace(/[),.!?]+$/, "");
+    const start = match.index;
+    if (start > lastIndex) content.append(document.createTextNode(text.slice(lastIndex, start)));
+    let url;
+    try { url = new URL(raw); } catch { content.append(document.createTextNode(raw)); lastIndex = start + raw.length; continue; }
+    if (url.protocol !== "https:") { content.append(document.createTextNode(raw)); lastIndex = start + raw.length; continue; }
+    const link = document.createElement("a");
+    link.href = url.href;
+    link.target = "_blank";
+    link.rel = "noopener noreferrer";
+    const isMediaFile = /\.(mp4|webm|mov|m4v|mp3|m4a|wav|ogg|pdf|zip)(?:$|\?)/i.test(url.pathname + url.search);
+    link.textContent = isMediaFile ? "Abrir / baixar arquivo" : raw;
+    if (isMediaFile) link.setAttribute("download", "");
+    content.append(link);
+    lastIndex = start + raw.length;
+  }
+  if (lastIndex < text.length) content.append(document.createTextNode(text.slice(lastIndex)));
   files.forEach(file => {
     const chip = document.createElement("span");
     chip.className = "file-chip";
