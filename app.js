@@ -84,7 +84,7 @@ async function buildUserParts(text, files) {
   const parts = [];
   if (text) parts.push({text});
   for (const file of files) {
-    if (file.size > 8 * 1024 * 1024) throw new Error(file.name + " ultrapassa o limite de 8 MB.");
+    if (file.size > 3 * 1024 * 1024) throw new Error(file.name + " ultrapassa o limite de 3 MB.");
     if (file.type.startsWith("image/") || file.type === "application/pdf") {
       parts.push(await fileToPart(file));
     } else if (file.type === "text/plain" || file.name.toLowerCase().endsWith(".txt")) {
