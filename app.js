@@ -4,10 +4,13 @@ const messages = $("messages");
 const welcome = $("welcome");
 const fileInput = $("fileInput");
 let attachments = [];
-let conversations = JSON.parse(localStorage.getItem("aurix-history") || "[]");
+let sending = false;
+let activeConversationId = Date.now();
+let conversations = [];
+try { conversations = JSON.parse(localStorage.getItem("aurix-history") || "[]"); } catch { conversations = []; }
 
 function saveHistory() {
-  localStorage.setItem("aurix-history", JSON.stringify(conversations.slice(0, 30)));
+  try { localStorage.setItem("aurix-history", JSON.stringify(conversations.slice(0, 30))); } catch {}
   renderHistory();
 }
 function renderHistory() {
@@ -50,26 +53,102 @@ function addMessage(role, text, files = []) {
   row.append(content);
   messages.append(row);
   window.scrollTo({top: document.body.scrollHeight, behavior:"smooth"});
+  return content;
 }
-function sendMessage(text = input.value.trim()) {
-  if (!text && !attachments.length) return;
-  const files = [...attachments];
-  addMessage("user", text || "Arquivo enviado", files);
-  if (!conversations.length || conversations[0].id !== activeConversationId) {
-    conversations.unshift({id: activeConversationId, title: (text || files[0]?.name || "Nova conversa").slice(0, 42), messages: []});
+function showTyping() {
+  const row = document.createElement("article");
+  row.className = "message assistant";
+  row.id = "typingIndicator";
+  const badge = document.createElement("div");
+  badge.className = "message-badge";
+  badge.textContent = "A";
+  const content = document.createElement("div");
+  content.className = "message-content typing";
+  content.textContent = "AURIX está pensando…";
+  row.append(badge, content);
+  messages.append(row);
+  window.scrollTo({top: document.body.scrollHeight, behavior:"smooth"});
+}
+function fileToPart(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error("Não foi possível ler o arquivo " + file.name));
+    reader.onload = () => {
+      const result = String(reader.result || "");
+      resolve({ inlineData: { mimeType: file.type, data: result.split(",")[1] || "" } });
+    };
+    reader.readAsDataURL(file);
+  });
+}
+async function buildUserParts(text, files) {
+  const parts = [];
+  if (text) parts.push({text});
+  for (const file of files) {
+    if (file.size > 8 * 1024 * 1024) throw new Error(file.name + " ultrapassa o limite de 8 MB.");
+    if (file.type.startsWith("image/") || file.type === "application/pdf") {
+      parts.push(await fileToPart(file));
+    } else if (file.type === "text/plain" || file.name.toLowerCase().endsWith(".txt")) {
+      const content = await file.text();
+      parts.push({text: "\n\nConteúdo do arquivo " + file.name + ":\n" + content.slice(0, 20000)});
+    } else {
+      throw new Error("Formato não suportado: " + file.name + ". Envie imagens, PDF ou TXT.");
+    }
   }
-  const current = conversations.find(c => c.id === activeConversationId);
-  if (current) current.messages.push({role:"user", text, files:files.map(f=>({name:f.name}))});
-  saveHistory();
-  input.value = "";
-  input.style.height = "auto";
-  attachments = [];
-  $("attachmentList").textContent = "";
-  addMessage("assistant", "A interface da AURIX AI já está funcionando! O motor de inteligência artificial ainda não foi conectado. Estamos preparando essa integração com uma opção gratuita, sem ativar serviços pagos ou cobranças.");
-  if (current) current.messages.push({role:"assistant", text:"A interface da AURIX AI já está funcionando! O motor de inteligência artificial ainda não foi conectado. Estamos preparando essa integração com uma opção gratuita, sem ativar serviços pagos ou cobranças."});
-  saveHistory();
+  return parts;
 }
-let activeConversationId = Date.now();
+function getCurrentConversation(title) {
+  let current = conversations.find(c => c.id === activeConversationId);
+  if (!current) {
+    current = {id: activeConversationId, title: (title || "Nova conversa").slice(0, 42), messages: []};
+    conversations.unshift(current);
+  }
+  return current;
+}
+async function sendMessage(text = input.value.trim()) {
+  if (sending || (!text && !attachments.length)) return;
+  const files = [...attachments];
+  const visibleText = text || "Analise o(s) arquivo(s) anexado(s).";
+  sending = true;
+  $("sendButton").disabled = true;
+  input.disabled = true;
+  addMessage("user", visibleText, files);
+  const current = getCurrentConversation(visibleText || files[0]?.name);
+  try {
+    const parts = await buildUserParts(text, files);
+    const history = current.messages.filter(m => m.role === "user" || m.role === "model").slice(-15);
+    history.push({role:"user", parts});
+    input.value = "";
+    input.style.height = "auto";
+    attachments = [];
+    $("attachmentList").textContent = "";
+    showTyping();
+
+    const response = await fetch("/api/chat", {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({messages: history})
+    });
+    const result = await response.json().catch(() => ({}));
+    $("typingIndicator")?.remove();
+    if (!response.ok) throw new Error(result.error || "Não foi possível conectar à AURIX agora.");
+    const answer = String(result.answer || "").trim();
+    addMessage("assistant", answer);
+    current.messages.push({role:"user", parts:[{text:visibleText}], text:visibleText, files:files.map(f=>({name:f.name}))});
+    current.messages.push({role:"model", parts:[{text:answer}], text:answer});
+    saveHistory();
+  } catch (error) {
+    $("typingIndicator")?.remove();
+    addMessage("assistant", error.message || "Ocorreu um erro inesperado. Tente novamente.");
+    input.value = text;
+    attachments = files;
+    $("attachmentList").textContent = attachments.map(f => "📎 " + f.name).join("  ·  ");
+  } finally {
+    sending = false;
+    $("sendButton").disabled = false;
+    input.disabled = false;
+    input.focus();
+  }
+}
 function newChat() {
   activeConversationId = Date.now();
   messages.innerHTML = "";
@@ -85,7 +164,7 @@ function loadConversation(index) {
   activeConversationId = item.id;
   messages.innerHTML = "";
   welcome.hidden = true;
-  item.messages.forEach(m => addMessage(m.role, m.text));
+  item.messages.forEach(m => addMessage(m.role === "model" ? "assistant" : "user", m.text || "", m.files || []));
   closePanel();
 }
 function openPanel() {
@@ -108,7 +187,8 @@ input.addEventListener("input", () => {
 });
 $("attachButton").addEventListener("click", () => fileInput.click());
 fileInput.addEventListener("change", () => {
-  attachments = [...attachments, ...fileInput.files];
+  const selected = [...fileInput.files];
+  attachments = [...attachments, ...selected];
   $("attachmentList").textContent = attachments.map(f => "📎 " + f.name).join("  ·  ");
   fileInput.value = "";
 });
@@ -127,4 +207,7 @@ $("newChatButton").addEventListener("click", newChat);
 $("panelNewChat").addEventListener("click", newChat);
 document.querySelectorAll(".suggestion").forEach(button => button.addEventListener("click", () => { input.value = button.dataset.prompt; sendMessage(); }));
 renderHistory();
+fetch("/api/chat").then(r => r.json()).then(s => {
+  if (s.ok && !s.configured) $("composerNote")?.replaceChildren(document.createTextNode("AURIX: falta configurar a chave gratuita do modelo no servidor."));
+}).catch(()=>{});
 if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js").catch(()=>{}));
