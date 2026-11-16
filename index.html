@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#090d18">
+  <meta name="description" content="AURIX AI — sua inteligência artificial em um só lugar.">
+  <title>AURIX AI</title>
+  <link rel="manifest" href="./manifest.json">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <button class="icon-button menu-button" id="menuButton" aria-label="Abrir menu">☰</button>
+      <a class="brand" href="./" aria-label="AURIX AI início">
+        <span class="brand-mark">A</span><span>AURIX <b>AI</b></span>
+      </a>
+      <button class="new-chat" id="newChatButton">＋ <span>Nova conversa</span></button>
+    </header>
+
+    <main class="chat-area">
+      <section class="welcome" id="welcome">
+        <div class="welcome-orb">A</div>
+        <p class="eyebrow">INTELIGÊNCIA ARTIFICIAL</p>
+        <h1>O que vamos <span>criar</span> hoje?</h1>
+        <p class="welcome-copy">Converse, descubra ideias e transforme seus planos em realidade.</p>
+        <div class="suggestions">
+          <button class="suggestion" data-prompt="Me ajude a criar uma ideia de negócio">✦ <span>Crie uma ideia de negócio</span></button>
+          <button class="suggestion" data-prompt="Explique um assunto de forma simples">⌁ <span>Aprenda algo novo</span></button>
+          <button class="suggestion" data-prompt="Me ajude a escrever um texto">✎ <span>Escreva um texto</span></button>
+        </div>
+      </section>
+
+      <section class="messages" id="messages" aria-live="polite"></section>
+    </main>
+
+    <footer class="composer-wrap">
+      <div class="composer">
+        <input id="fileInput" type="file" hidden multiple accept="image/*,.pdf,.txt,.doc,.docx">
+        <button class="attach-button" id="attachButton" aria-label="Adicionar arquivo">＋</button>
+        <textarea id="messageInput" rows="1" placeholder="Pergunte qualquer coisa à AURIX..." aria-label="Digite sua mensagem"></textarea>
+        <button class="voice-button" id="voiceButton" aria-label=" ditar mensagem" title="Ditado por voz">🎙</button>
+        <button class="send-button" id="sendButton" aria-label="Enviar mensagem">↑</button>
+      </div>
+      <div class="composer-note">AURIX AI pode cometer erros. Confira informações importantes.</div>
+      <div class="attachment-list" id="attachmentList"></div>
+    </footer>
+  </div>
+
+  <aside class="side-panel" id="sidePanel" aria-hidden="true">
+    <div class="panel-head"><strong>AURIX AI</strong><button id="closePanel" class="icon-button" aria-label="Fechar">×</button></div>
+    <button id="panelNewChat" class="panel-action">＋ Nova conversa</button>
+    <p class="panel-label">CONVERSAS RECENTES</p>
+    <div id="historyList" class="history-list"><span class="empty-history">Suas conversas aparecerão aqui.</span></div>
+    <div class="panel-bottom">Versão inicial · 0.1.0</div>
+  </aside>
+  <div class="scrim" id="scrim"></div>
+  <script src="./app.js"></script>
+</body>
+</html>
