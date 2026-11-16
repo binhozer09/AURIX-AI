@@ -44,7 +44,7 @@ function cleanMessages(messages) {
       const inline = part.inlineData;
       if (inline && typeof inline.data === "string" && typeof inline.mimeType === "string") {
         const allowed = inline.mimeType.startsWith("image/") || inline.mimeType === "application/pdf";
-        if (!allowed || inline.data.length > 11_000_000) throw new Error("Anexo não suportado ou muito grande. Use imagens ou PDF de até 8 MB.");
+        if (!allowed || inline.data.length > 4_200_000) throw new Error("Anexo não suportado ou muito grande. Use imagens ou PDF de até 3 MB.");
         return { inlineData: { mimeType: inline.mimeType, data: inline.data } };
       }
       throw new Error("Parte da mensagem inválida.");
