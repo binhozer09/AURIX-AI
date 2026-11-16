@@ -31,7 +31,8 @@ function allowedRequest(req) {
 
 function cleanMessages(messages) {
   if (!Array.isArray(messages) || messages.length === 0) throw new Error("Envie uma mensagem para começar.");
-  return messages.slice(-MAX_MESSAGES).map((message) => {
+  const filesToDelete = [];
+  const cleaned = messages.slice(-MAX_MESSAGES).map((message) => {
     const role = message && message.role === "model" ? "model" : "user";
     if (!Array.isArray(message.parts) || message.parts.length === 0 || message.parts.length > MAX_PARTS) {
       throw new Error("Formato de mensagem inválido.");
@@ -41,16 +42,19 @@ function cleanMessages(messages) {
         if (part.text.length > MAX_TEXT) throw new Error("A mensagem está muito grande. Divida o conteúdo em partes menores.");
         return { text: part.text };
       }
-      const inline = part.inlineData;
-      if (inline && typeof inline.data === "string" && typeof inline.mimeType === "string") {
-        const allowed = inline.mimeType.startsWith("image/") || inline.mimeType === "application/pdf";
-        if (!allowed || inline.data.length > 4_200_000) throw new Error("Anexo não suportado ou muito grande. Use imagens ou PDF de até 3 MB.");
-        return { inlineData: { mimeType: inline.mimeType, data: inline.data } };
+      if (part.fileData && typeof part.fileData.fileUri === "string" && typeof part.fileData.mimeType === "string") {
+        const allowed = part.fileData.mimeType.startsWith("image/") || part.fileData.mimeType === "application/pdf";
+        if (!allowed || typeof part.fileName !== "string" || !part.fileName.startsWith("files/")) {
+          throw new Error("Referência de anexo inválida.");
+        }
+        filesToDelete.push(part.fileName);
+        return { fileData: { mimeType: part.fileData.mimeType, fileUri: part.fileData.fileUri } };
       }
       throw new Error("Parte da mensagem inválida.");
     });
     return { role, parts };
   });
+  return { messages: cleaned, filesToDelete };
 }
 
 export default async function handler(req, res) {
@@ -69,8 +73,10 @@ export default async function handler(req, res) {
   }
 
   try {
-    const messages = cleanMessages(req.body && req.body.messages);
-    const response = await fetch(
+    const { messages, filesToDelete } = cleanMessages(req.body && req.body.messages);
+    let response;
+    try {
+      response = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(MODEL)}:generateContent`,
       {
         method: "POST",
@@ -84,7 +90,19 @@ export default async function handler(req, res) {
           generationConfig: { temperature: 0.7, maxOutputTokens: 8192 }
         })
       }
-    );
+      );
+    } finally {
+      await Promise.all(filesToDelete.map(async (fileName) => {
+        try {
+          await fetch(`https://generativelanguage.googleapis.com/v1beta/${encodeURIComponent(fileName)}`, {
+            method: "DELETE",
+            headers: {"x-goog-api-key": process.env.GEMINI_API_KEY}
+          });
+        } catch (cleanupError) {
+          console.error("Temporary Gemini file cleanup failed:", cleanupError);
+        }
+      }));
+    }
 
     const data = await response.json().catch(() => ({}));
     if (!response.ok) {
