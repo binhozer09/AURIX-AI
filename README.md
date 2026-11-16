@@ -7,7 +7,7 @@ Aplicativo web instalável (PWA) da AURIX AI, em português do Brasil.
 - Interface de conversa responsiva.
 - Histórico local no navegador.
 - Conversas com contexto enviado ao modelo.
-- Anexos de imagens, PDF e TXT (até 8 MB por arquivo).
+- Anexos de imagens, PDF e TXT (até 3 MB por arquivo).
 - Ditado por voz quando o navegador oferece suporte.
 - Backend serverless em `/api/chat`; a chave do modelo nunca fica no navegador.
 - Limite inicial simples de requisições por IP para reduzir abuso.
