@@ -31,19 +31,18 @@
           <button class="suggestion" data-prompt="Me ajude a escrever um texto">✎ <span>Escreva um texto</span></button>
         </div>
       </section>
-
       <section class="messages" id="messages" aria-live="polite"></section>
     </main>
 
     <footer class="composer-wrap">
       <div class="composer">
-        <input id="fileInput" type="file" hidden multiple accept="image/*,.pdf,.txt,.doc,.docx">
+        <input id="fileInput" type="file" hidden multiple accept="image/*,application/pdf,text/plain,.txt">
         <button class="attach-button" id="attachButton" aria-label="Adicionar arquivo">＋</button>
         <textarea id="messageInput" rows="1" placeholder="Pergunte qualquer coisa à AURIX..." aria-label="Digite sua mensagem"></textarea>
-        <button class="voice-button" id="voiceButton" aria-label=" ditar mensagem" title="Ditado por voz">🎙</button>
+        <button class="voice-button" id="voiceButton" aria-label="Ditado por voz" title="Ditado por voz">🎙</button>
         <button class="send-button" id="sendButton" aria-label="Enviar mensagem">↑</button>
       </div>
-      <div class="composer-note">AURIX AI pode cometer erros. Confira informações importantes.</div>
+      <div class="composer-note" id="composerNote">AURIX AI pode cometer erros. Confira informações importantes.</div>
       <div class="attachment-list" id="attachmentList"></div>
     </footer>
   </div>
@@ -53,7 +52,7 @@
     <button id="panelNewChat" class="panel-action">＋ Nova conversa</button>
     <p class="panel-label">CONVERSAS RECENTES</p>
     <div id="historyList" class="history-list"><span class="empty-history">Suas conversas aparecerão aqui.</span></div>
-    <div class="panel-bottom">Versão inicial · 0.1.0</div>
+    <div class="panel-bottom">Versão inicial · 0.2.0</div>
   </aside>
   <div class="scrim" id="scrim"></div>
   <script src="./app.js"></script>
