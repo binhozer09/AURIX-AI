@@ -44,7 +44,7 @@ function cleanMessages(messages) {
       }
       if (part.fileData && typeof part.fileData.fileUri === "string" && typeof part.fileData.mimeType === "string") {
         const allowed = part.fileData.mimeType.startsWith("image/") || part.fileData.mimeType === "application/pdf";
-        if (!allowed || typeof part.fileName !== "string" || !part.fileName.startsWith("files/")) {
+        if (!allowed || typeof part.fileName !== "string" || !/^files\/[A-Za-z0-9_-]+$/.test(part.fileName)) {
           throw new Error("Referência de anexo inválida.");
         }
         filesToDelete.push(part.fileName);
@@ -94,7 +94,7 @@ export default async function handler(req, res) {
     } finally {
       await Promise.all(filesToDelete.map(async (fileName) => {
         try {
-          await fetch(`https://generativelanguage.googleapis.com/v1beta/${encodeURIComponent(fileName)}`, {
+          await fetch(`https://generativelanguage.googleapis.com/v1beta/${fileName}`, {
             method: "DELETE",
             headers: {"x-goog-api-key": process.env.GEMINI_API_KEY}
           });
