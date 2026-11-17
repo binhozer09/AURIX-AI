@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 820" role="img" aria-label="Personagem AURIX em desenho 3D">
+<defs>
+ <linearGradient id="skin" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#ffe0cf"/><stop offset=".55" stop-color="#f4b99f"/><stop offset="1" stop-color="#d98d7d"/></linearGradient>
+ <linearGradient id="hair" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#31114e"/><stop offset=".45" stop-color="#6e2d9a"/><stop offset="1" stop-color="#241039"/></linearGradient>
+ <linearGradient id="dress" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#d65cff"/><stop offset=".5" stop-color="#8b2ed0"/><stop offset="1" stop-color="#54208e"/></linearGradient>
+ <linearGradient id="shoe" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#f6dfff"/><stop offset="1" stop-color="#b879e9"/></linearGradient>
+ <radialGradient id="cheek"><stop stop-color="#ef8e9e" stop-opacity=".65"/><stop offset="1" stop-color="#ef8e9e" stop-opacity="0"/></radialGradient>
+ <filter id="shadow" x="-30%" y="-20%" width="160%" height="160%"><feGaussianBlur stdDeviation="10"/></filter>
+</defs>
+<ellipse cx="260" cy="786" rx="118" ry="18" fill="#16051f" opacity=".35" filter="url(#shadow)"/>
+<!-- hair behind -->
+<path d="M151 170Q126 54 253 42Q386 33 389 171L408 324Q411 380 372 421L148 414Q105 363 127 286Z" fill="url(#hair)"/>
+<path d="M155 187Q110 274 145 394Q161 435 184 443L205 265Z" fill="#3a1559"/>
+<path d="M365 175Q412 261 380 393Q367 431 344 444L320 260Z" fill="#32124f"/>
+<!-- legs -->
+<path d="M208 585L199 728Q198 751 221 752L247 752Q258 747 254 729L269 596Z" fill="url(#skin)"/>
+<path d="M284 590L291 728Q291 750 314 752L339 751Q352 746 345 728L329 583Z" fill="url(#skin)"/>
+<path d="M197 731Q178 739 174 759Q173 774 193 777L252 777Q267 773 259 757L246 739Z" fill="url(#shoe)"/>
+<path d="M292 733Q278 747 282 764Q284 779 302 779L358 777Q374 772 361 755L338 737Z" fill="url(#shoe)"/>
+<!-- body and arms -->
+<path d="M194 302Q155 315 151 372L130 498Q125 525 145 534Q166 541 176 516L216 407Z" fill="url(#skin)"/>
+<path d="M323 302Q365 311 373 371L392 494Q397 521 376 530Q357 535 348 509L310 406Z" fill="url(#skin)"/>
+<path d="M188 296Q258 265 330 296L350 494Q352 555 324 606Q260 632 194 605Q167 548 173 490Z" fill="url(#dress)"/>
+<path d="M191 303Q260 327 327 302L321 348Q259 371 197 348Z" fill="#f3b8ff" opacity=".32"/>
+<path d="M175 486Q258 512 346 485L351 554Q342 600 324 614Q259 635 194 611Q176 563 175 486Z" fill="#6724a2" opacity=".5"/>
+<path d="M206 372Q259 392 312 372" fill="none" stroke="#f4c9ff" stroke-width="5" opacity=".55"/>
+<!-- neck -->
+<path d="M226 257L225 307Q260 335 295 307L292 254Z" fill="url(#skin)"/>
+<!-- head -->
+<ellipse cx="260" cy="180" rx="103" ry="124" fill="url(#skin)"/>
+<!-- hair cap/fringe -->
+<path d="M157 184Q132 76 235 55Q337 31 368 122Q380 164 353 204Q347 145 311 119Q276 159 211 152Q185 151 157 184Z" fill="url(#hair)"/>
+<path d="M158 171Q174 113 220 101Q251 94 277 110Q238 112 216 145Q190 170 158 184Z" fill="#542078"/>
+<path d="M280 111Q328 102 359 150Q348 184 330 198Q329 146 280 111Z" fill="#40165e"/>
+<!-- ears -->
+<ellipse cx="158" cy="198" rx="17" ry="28" fill="url(#skin)"/><ellipse cx="362" cy="198" rx="17" ry="28" fill="url(#skin)"/>
+<!-- eyes -->
+<ellipse cx="220" cy="188" rx="11" ry="15" fill="#38234a"/><ellipse cx="301" cy="188" rx="11" ry="15" fill="#38234a"/>
+<circle cx="224" cy="182" r="4" fill="#fff"/><circle cx="305" cy="182" r="4" fill="#fff"/>
+<path d="M204 164Q220 153 236 164M285 164Q301 153 317 164" fill="none" stroke="#60364a" stroke-width="5" stroke-linecap="round"/>
+<ellipse cx="198" cy="222" rx="25" ry="14" fill="url(#cheek)"/><ellipse cx="322" cy="222" rx="25" ry="14" fill="url(#cheek)"/>
+<path d="M255 194Q246 218 258 221" fill="none" stroke="#cf8e7f" stroke-width="4" stroke-linecap="round"/>
+<path d="M239 242Q260 259 282 241" fill="none" stroke="#a84968" stroke-width="5" stroke-linecap="round"/>
+<!-- hair side locks -->
+<path d="M155 170Q132 246 165 321Q175 347 192 357Q171 269 184 205Z" fill="#3a1559"/>
+<path d="M363 160Q390 249 355 328Q343 350 329 357Q350 268 337 204Z" fill="#32124f"/>
+<!-- hair shine -->
+<path d="M189 89Q224 59 263 67" fill="none" stroke="#b66de1" stroke-width="9" stroke-linecap="round" opacity=".45"/>
+<!-- jewelry -->
+<circle cx="154" cy="223" r="7" fill="#ffe5a8"/><circle cx="366" cy="223" r="7" fill="#ffe5a8"/>
+<!-- heart detail -->
+<path d="M260 430C245 413 224 431 260 461C296 431 275 413 260 430Z" fill="#ffd9ff" opacity=".9"/>
+</svg>
