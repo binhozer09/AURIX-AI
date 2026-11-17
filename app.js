@@ -1,244 +1,36 @@
 const $ = (id) => document.getElementById(id);
-const input = $("messageInput");
-const messages = $("messages");
-const welcome = $("welcome");
-const fileInput = $("fileInput");
-let attachments = [];
-let sending = false;
-let activeConversationId = Date.now();
-let conversations = [];
-try { conversations = JSON.parse(localStorage.getItem("aurix-history") || "[]"); } catch { conversations = []; }
-
-function saveHistory() {
-  try { localStorage.setItem("aurix-history", JSON.stringify(conversations.slice(0, 30))); } catch {}
-  renderHistory();
-}
-function renderHistory() {
-  const list = $("historyList");
-  list.innerHTML = "";
-  if (!conversations.length) {
-    const empty = document.createElement("span");
-    empty.className = "empty-history";
-    empty.textContent = "Suas conversas aparecerão aqui.";
-    list.append(empty);
-    return;
-  }
-  conversations.forEach((item, index) => {
-    const button = document.createElement("button");
-    button.className = "history-item";
-    button.textContent = item.title;
-    button.addEventListener("click", () => loadConversation(index));
-    list.append(button);
-  });
-}
-function addMessage(role, text, files = []) {
-  welcome.hidden = true;
-  const row = document.createElement("article");
-  row.className = "message " + role;
-  if (role === "assistant") {
-    const badge = document.createElement("div");
-    badge.className = "message-badge";
-    badge.textContent = "A";
-    row.append(badge);
-  }
-  const content = document.createElement("div");
-  content.className = "message-content";
-  const urlPattern = /https:\/\/[^\s<>"']+/g;
-  let lastIndex = 0;
-  for (const match of text.matchAll(urlPattern)) {
-    const raw = match[0].replace(/[),.!?]+$/, "");
-    const start = match.index;
-    if (start > lastIndex) content.append(document.createTextNode(text.slice(lastIndex, start)));
-    let url;
-    try { url = new URL(raw); } catch { content.append(document.createTextNode(raw)); lastIndex = start + raw.length; continue; }
-    if (url.protocol !== "https:") { content.append(document.createTextNode(raw)); lastIndex = start + raw.length; continue; }
-    const link = document.createElement("a");
-    link.href = url.href;
-    link.target = "_blank";
-    link.rel = "noopener noreferrer";
-    const isMediaFile = /\.(mp4|webm|mov|m4v|mp3|m4a|wav|ogg|pdf|zip)(?:$|\?)/i.test(url.pathname + url.search);
-    link.textContent = isMediaFile ? "Abrir / baixar arquivo" : raw;
-    if (isMediaFile) link.setAttribute("download", "");
-    content.append(link);
-    lastIndex = start + raw.length;
-  }
-  if (lastIndex < text.length) content.append(document.createTextNode(text.slice(lastIndex)));
-  files.forEach(file => {
-    const chip = document.createElement("span");
-    chip.className = "file-chip";
-    chip.textContent = "📎 " + file.name;
-    content.append(document.createElement("br"), chip);
-  });
-  row.append(content);
-  messages.append(row);
-  window.scrollTo({top: document.body.scrollHeight, behavior:"smooth"});
-  return content;
-}
-function showTyping() {
-  const row = document.createElement("article");
-  row.className = "message assistant";
-  row.id = "typingIndicator";
-  const badge = document.createElement("div");
-  badge.className = "message-badge";
-  badge.textContent = "A";
-  const content = document.createElement("div");
-  content.className = "message-content typing";
-  content.textContent = "AURIX está pensando…";
-  row.append(badge, content);
-  messages.append(row);
-  window.scrollTo({top: document.body.scrollHeight, behavior:"smooth"});
-}
-async function uploadFile(file) {
-  const maxSize = file.type === "application/pdf" ? 50 * 1024 * 1024 : 100 * 1024 * 1024;
-  if (file.size > maxSize) throw new Error(file.name + (file.type === "application/pdf" ? " ultrapassa o limite de 50 MB para PDFs." : " ultrapassa o limite de 100 MB."));
-  const init = await fetch("/api/upload", {
-    method: "POST",
-    headers: {"Content-Type":"application/json"},
-    body: JSON.stringify({name:file.name, mimeType:file.type, size:file.size})
-  });
-  const setup = await init.json().catch(() => ({}));
-  if (!init.ok || !setup.uploadUrl) throw new Error(setup.error || "Não foi possível iniciar o envio de " + file.name);
-  const uploaded = await fetch(setup.uploadUrl, {
-    method: "POST",
-    headers: {"Content-Type":"application/octet-stream", "X-Goog-Upload-Offset":"0", "X-Goog-Upload-Command":"upload, finalize"},
-    body: file
-  });
-  const result = await uploaded.json().catch(() => ({}));
-  if (!uploaded.ok || !result.file?.uri || !result.file?.name) {
-    throw new Error("O Google não concluiu o envio de " + file.name + ". Tente novamente.");
-  }
-  return {fileData:{mimeType:file.type, fileUri:result.file.uri}, fileName:result.file.name};
-}
-async function buildUserParts(text, files) {
-  const parts = [];
-  if (text) parts.push({text});
-  for (const file of files) {
-    const maxSize = file.type === "application/pdf" ? 50 * 1024 * 1024 : 100 * 1024 * 1024;
-    if (file.size > maxSize) throw new Error(file.name + (file.type === "application/pdf" ? " ultrapassa o limite de 50 MB para PDFs." : " ultrapassa o limite de 100 MB."));
-    if (file.type.startsWith("image/") || file.type === "application/pdf") {
-      const uploaded = await uploadFile(file);
-      parts.push({fileData:uploaded.fileData, fileName:uploaded.fileName});
-    } else if (file.type === "text/plain" || file.name.toLowerCase().endsWith(".txt")) {
-      const content = await file.text();
-      parts.push({text: "\n\nConteúdo do arquivo " + file.name + ":\n" + content.slice(0, 20000)});
-    } else {
-      throw new Error("Formato não suportado: " + file.name + ". Envie imagens, PDF ou TXT.");
-    }
-  }
-  return parts;
-}
-function getCurrentConversation(title) {
-  let current = conversations.find(c => c.id === activeConversationId);
-  if (!current) {
-    current = {id: activeConversationId, title: (title || "Nova conversa").slice(0, 42), messages: []};
-    conversations.unshift(current);
-  }
-  return current;
-}
-async function sendMessage(text = input.value.trim()) {
-  if (sending || (!text && !attachments.length)) return;
-  const files = [...attachments];
-  const visibleText = text || "Analise o(s) arquivo(s) anexado(s).";
-  sending = true;
-  $("sendButton").disabled = true;
-  input.disabled = true;
-  addMessage("user", visibleText, files);
-  const current = getCurrentConversation(visibleText || files[0]?.name);
-  try {
-    const parts = await buildUserParts(text, files);
-    const history = current.messages.filter(m => m.role === "user" || m.role === "model").slice(-15);
-    history.push({role:"user", parts});
-    input.value = "";
-    input.style.height = "auto";
-    attachments = [];
-    $("attachmentList").textContent = "";
-    showTyping();
-
-    const response = await fetch("/api/chat", {
-      method: "POST",
-      headers: {"Content-Type":"application/json"},
-      body: JSON.stringify({messages: history})
-    });
-    const result = await response.json().catch(() => ({}));
-    $("typingIndicator")?.remove();
-    if (!response.ok) throw new Error(result.error || "Não foi possível conectar à AURIX agora.");
-    const answer = String(result.answer || "").trim();
-    addMessage("assistant", answer);
-    current.messages.push({role:"user", parts:[{text:visibleText}], text:visibleText, files:files.map(f=>({name:f.name}))});
-    current.messages.push({role:"model", parts:[{text:answer}], text:answer});
-    saveHistory();
-  } catch (error) {
-    $("typingIndicator")?.remove();
-    addMessage("assistant", error.message || "Ocorreu um erro inesperado. Tente novamente.");
-    input.value = text;
-    attachments = files;
-    $("attachmentList").textContent = attachments.map(f => "📎 " + f.name).join("  ·  ");
-  } finally {
-    sending = false;
-    $("sendButton").disabled = false;
-    input.disabled = false;
-    input.focus();
-  }
-}
-function newChat() {
-  activeConversationId = Date.now();
-  messages.innerHTML = "";
-  welcome.hidden = false;
-  input.value = "";
-  attachments = [];
-  $("attachmentList").textContent = "";
-  closePanel();
-}
-function loadConversation(index) {
-  const item = conversations[index];
-  if (!item) return;
-  activeConversationId = item.id;
-  messages.innerHTML = "";
-  welcome.hidden = true;
-  item.messages.forEach(m => addMessage(m.role === "model" ? "assistant" : "user", m.text || "", m.files || []));
-  closePanel();
-}
-function openPanel() {
-  $("sidePanel").classList.add("open");
-  $("sidePanel").setAttribute("aria-hidden","false");
-  $("scrim").classList.add("show");
-}
-function closePanel() {
-  $("sidePanel").classList.remove("open");
-  $("sidePanel").setAttribute("aria-hidden","true");
-  $("scrim").classList.remove("show");
-}
-$("sendButton").addEventListener("click", () => sendMessage());
-input.addEventListener("keydown", e => {
-  if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); }
-});
-input.addEventListener("input", () => {
-  input.style.height = "auto";
-  input.style.height = Math.min(input.scrollHeight, 150) + "px";
-});
-$("attachButton").addEventListener("click", () => fileInput.click());
-fileInput.addEventListener("change", () => {
-  const selected = [...fileInput.files];
-  attachments = [...attachments, ...selected];
-  $("attachmentList").textContent = attachments.map(f => "📎 " + f.name).join("  ·  ");
-  fileInput.value = "";
-});
-$("voiceButton").addEventListener("click", () => {
-  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SpeechRecognition) { alert("Ditado por voz não está disponível neste navegador."); return; }
-  const recognition = new SpeechRecognition();
-  recognition.lang = "pt-BR";
-  recognition.onresult = event => { input.value += (input.value ? " " : "") + event.results[0][0].transcript; input.focus(); };
-  recognition.start();
-});
-$("menuButton").addEventListener("click", openPanel);
-$("closePanel").addEventListener("click", closePanel);
-$("scrim").addEventListener("click", closePanel);
-$("newChatButton").addEventListener("click", newChat);
-$("panelNewChat").addEventListener("click", newChat);
-document.querySelectorAll(".suggestion").forEach(button => button.addEventListener("click", () => { input.value = button.dataset.prompt; sendMessage(); }));
+const input=$("messageInput"), messages=$("messages"), welcome=$("welcome"), fileInput=$("fileInput");
+let attachments=[],sending=false,activeConversationId=Date.now(),conversations=[];
+let recognition=null,voiceReply=false;
+try{conversations=JSON.parse(localStorage.getItem("aurix-history")||"[]")}catch{conversations=[]}
+function saveHistory(){try{localStorage.setItem("aurix-history",JSON.stringify(conversations.slice(0,30)))}catch{}renderHistory()}
+function renderHistory(){const list=$("historyList");list.innerHTML="";if(!conversations.length){const e=document.createElement("span");e.className="empty-history";e.textContent="Suas conversas aparecerão aqui.";list.append(e);return}conversations.forEach((item,index)=>{const b=document.createElement("button");b.className="history-item";b.textContent=item.title;b.addEventListener("click",()=>loadConversation(index));list.append(b)})}
+function addMessage(role,text,files=[]){welcome.hidden=true;const row=document.createElement("article");row.className="message "+role;const content=document.createElement("div");content.className="message-content";content.textContent=text;files.forEach(f=>{const chip=document.createElement("span");chip.className="file-chip";chip.textContent="📎 "+f.name;content.append(document.createElement("br"),chip)});row.append(content);messages.append(row);messages.scrollTop=messages.scrollHeight;return content}
+function showTyping(){const row=document.createElement("article");row.className="message assistant";row.id="typingIndicator";const content=document.createElement("div");content.className="message-content";content.textContent="AURIX está pensando…";row.append(content);messages.append(row);messages.scrollTop=messages.scrollHeight}
+function speak(text){if(!("speechSynthesis"in window)||!text)return;window.speechSynthesis.cancel();const utterance=new SpeechSynthesisUtterance(text);utterance.lang="pt-BR";utterance.rate=1;const voices=window.speechSynthesis.getVoices();const pt=voices.find(v=>v.lang&&v.lang.toLowerCase().startsWith("pt-br"))||voices.find(v=>v.lang&&v.lang.toLowerCase().startsWith("pt"));if(pt)utterance.voice=pt;window.speechSynthesis.speak(utterance)}
+async function uploadFile(file){const maxSize=file.type==="application/pdf"?50*1024*1024:100*1024*1024;if(file.size>maxSize)throw new Error(file.name+" ultrapassa o limite permitido.");const init=await fetch("/api/upload",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name:file.name,mimeType:file.type,size:file.size})});const setup=await init.json().catch(()=>({}));if(!init.ok||!setup.uploadUrl)throw new Error(setup.error||"Não foi possível iniciar o envio de "+file.name);const uploaded=await fetch(setup.uploadUrl,{method:"POST",headers:{"Content-Type":"application/octet-stream","X-Goog-Upload-Offset":"0","X-Goog-Upload-Command":"upload, finalize"},body:file});const result=await uploaded.json().catch(()=>({}));if(!uploaded.ok||!result.file?.uri||!result.file?.name)throw new Error("O envio de "+file.name+" não foi concluído.");return{fileData:{mimeType:file.type,fileUri:result.file.uri},fileName:result.file.name}}
+async function buildUserParts(text,files){const parts=[];if(text)parts.push({text});for(const file of files){if(file.type.startsWith("image/")||file.type==="application/pdf"||file.type.startsWith("video/")){const uploaded=await uploadFile(file);parts.push({fileData:uploaded.fileData,fileName:uploaded.fileName})}else if(file.type==="text/plain"||file.name.toLowerCase().endsWith(".txt")){parts.push({text:"\n\nConteúdo do arquivo "+file.name+":\n"+(await file.text()).slice(0,20000)})}else throw new Error("Formato não suportado: "+file.name)}return parts}
+function getCurrentConversation(title){let current=conversations.find(c=>c.id===activeConversationId);if(!current){current={id:activeConversationId,title:(title||"Nova conversa").slice(0,42),messages:[]};conversations.unshift(current)}return current}
+async function sendMessage(text=input.value.trim()){if(sending||(!text&&!attachments.length))return;const files=[...attachments],visibleText=text||"Analise o(s) arquivo(s) anexado(s).";sending=true;$("sendButton").disabled=true;input.disabled=true;addMessage("user",visibleText,files);const current=getCurrentConversation(visibleText||files[0]?.name);try{const parts=await buildUserParts(text,files);const history=current.messages.filter(m=>m.role==="user"||m.role==="model").slice(-15);history.push({role:"user",parts});input.value="";input.style.height="auto";attachments=[];$("attachmentList").textContent="";showTyping();const response=await fetch("/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({messages:history})});const result=await response.json().catch(()=>({}));$("typingIndicator")?.remove();if(!response.ok)throw new Error(result.error||"Não foi possível conectar à AURIX agora.");const answer=String(result.answer||"").trim();addMessage("assistant",answer);$("speechBubble").textContent=answer.length>90?answer.slice(0,87)+"…":answer;current.messages.push({role:"user",parts:[{text:visibleText}],text:visibleText,files:files.map(f=>({name:f.name}))},{role:"model",parts:[{text:answer}],text:answer});saveHistory();if(voiceReply)speak(answer)}catch(error){$("typingIndicator")?.remove();addMessage("assistant",error.message||"Ocorreu um erro inesperado. Tente novamente.");input.value=text;attachments=files;$("attachmentList").textContent=attachments.map(f=>"📎 "+f.name).join(" · ")}finally{sending=false;$("sendButton").disabled=false;input.disabled=false;input.focus()}}
+function newChat(){activeConversationId=Date.now();messages.innerHTML="";welcome.hidden=false;input.value="";attachments=[];$("attachmentList").textContent="";$("speechBubble").innerHTML="Oi, meu bem! 💜<br>Como posso te ajudar hoje?";closePanel()}
+function loadConversation(index){const item=conversations[index];if(!item)return;activeConversationId=item.id;messages.innerHTML="";welcome.hidden=true;item.messages.forEach(m=>addMessage(m.role==="model"?"assistant":"user",m.text||"",m.files||[]));closePanel()}
+function openPanel(){$("sidePanel").classList.add("open");$("sidePanel").setAttribute("aria-hidden","false");$("scrim").classList.add("show")}
+function closePanel(){$("sidePanel").classList.remove("open");$("sidePanel").setAttribute("aria-hidden","true");$("scrim").classList.remove("show")}
+function openPlus(){$("plusMenu").classList.toggle("open");$("plusMenu").setAttribute("aria-hidden",String(!$("plusMenu").classList.contains("open")))}
+function stopListening(){if(recognition){try{recognition.stop()}catch{}recognition=null}$("voiceButton").classList.remove("listening")}
+$("sendButton").addEventListener("click",()=>sendMessage());
+input.addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();sendMessage()}});
+input.addEventListener("input",()=>{input.style.height="auto";input.style.height=Math.min(input.scrollHeight,120)+"px"});
+$("attachButton").addEventListener("click",openPlus);
+$("plusMenu").addEventListener("click",e=>{const b=e.target.closest("button[data-action]");if(!b)return;const action=b.dataset.action;openPlus();if(action==="image")fileInput.click();else if(action==="camera")$("cameraInput").click();else if(action==="video")$("videoInput").click();else if(action==="gift"){input.value+=(input.value?" ":"")+"💜 Quero te presentear!";input.focus()}else if(action==="more")fileInput.click()});
+function addFiles(files){attachments=[...attachments,...files];$("attachmentList").textContent=attachments.map(f=>"📎 "+f.name).join(" · ")}
+fileInput.addEventListener("change",()=>{addFiles([...fileInput.files]);fileInput.value=""});
+$("cameraInput").addEventListener("change",()=>{addFiles([...$("cameraInput").files]);$("cameraInput").value=""});
+$("videoInput").addEventListener("change",()=>{addFiles([...$("videoInput").files]);$("videoInput").value=""});
+$("voiceButton").addEventListener("click",()=>{if(recognition){stopListening();return}const SpeechRecognition=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SpeechRecognition){alert("O reconhecimento de voz não está disponível neste navegador. Tente usar o Chrome.");return}voiceReply=true;recognition=new SpeechRecognition();recognition.lang="pt-BR";recognition.interimResults=false;recognition.maxAlternatives=1;$("voiceButton").classList.add("listening");recognition.onresult=e=>{const said=e.results[0][0].transcript;input.value=said;stopListening();sendMessage(said)};recognition.onerror=()=>stopListening();recognition.onend=()=>{$("voiceButton").classList.remove("listening");recognition=null};recognition.start()});
+$("danceButton").addEventListener("click",()=>{const figure=$("avatarFigure"),button=$("danceButton");figure.classList.toggle("dancing");button.classList.toggle("active");button.innerHTML=figure.classList.contains("dancing")?"Ⅱ Parar":"<span>♬</span> Dançar"});
+$("menuButton").addEventListener("click",openPanel);$("closePanel").addEventListener("click",closePanel);$("scrim").addEventListener("click",closePanel);$("panelNewChat").addEventListener("click",newChat);
+document.addEventListener("click",e=>{if(!$("plusMenu").contains(e.target)&&!$("attachButton").contains(e.target)){$("plusMenu").classList.remove("open");$("plusMenu").setAttribute("aria-hidden","true")}});
 renderHistory();
-fetch("/api/chat").then(r => r.json()).then(s => {
-  if (s.ok && !s.configured) $("composerNote")?.replaceChildren(document.createTextNode("AURIX: falta configurar a chave gratuita do modelo no servidor."));
-}).catch(()=>{});
-if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js").catch(()=>{}));
+fetch("/api/chat").then(r=>r.json()).then(s=>{if(s.ok&&!s.configured)$("composerNote").textContent="AURIX: configure a chave do modelo no servidor."}).catch(()=>{});
+if("serviceWorker"in navigator)window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(()=>{}));
