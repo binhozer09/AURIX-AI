@@ -37,6 +37,8 @@
 <!-- eyes -->
 <ellipse cx="220" cy="188" rx="11" ry="15" fill="#38234a"/><ellipse cx="301" cy="188" rx="11" ry="15" fill="#38234a"/>
 <circle cx="224" cy="182" r="4" fill="#fff"/><circle cx="305" cy="182" r="4" fill="#fff"/>
+<ellipse cx="220" cy="188" rx="12" ry="15" fill="url(#skin)" opacity="0"><animate attributeName="opacity" values="0;0;1;0;0" keyTimes="0;0.47;0.5;0.53;1" dur="4.6s" repeatCount="indefinite"/></ellipse>
+<ellipse cx="301" cy="188" rx="12" ry="15" fill="url(#skin)" opacity="0"><animate attributeName="opacity" values="0;0;1;0;0" keyTimes="0;0.47;0.5;0.53;1" dur="4.6s" repeatCount="indefinite"/></ellipse>
 <path d="M204 164Q220 153 236 164M285 164Q301 153 317 164" fill="none" stroke="#60364a" stroke-width="5" stroke-linecap="round"/>
 <ellipse cx="198" cy="222" rx="25" ry="14" fill="url(#cheek)"/><ellipse cx="322" cy="222" rx="25" ry="14" fill="url(#cheek)"/>
 <path d="M255 194Q246 218 258 221" fill="none" stroke="#cf8e7f" stroke-width="4" stroke-linecap="round"/>
