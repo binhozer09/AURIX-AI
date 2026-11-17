@@ -21,3 +21,6 @@
  .dance-button span{font-size:26px}
  .welcome{bottom:100px}
 }
+
+.avatar-figure.speaking .avatar-art{animation:voiceBob .28s ease-in-out infinite alternate}
+@keyframes voiceBob{from{transform:translateY(0)}to{transform:translateY(-3px)}}
