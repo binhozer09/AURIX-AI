@@ -42,7 +42,10 @@
 <path d="M204 164Q220 153 236 164M285 164Q301 153 317 164" fill="none" stroke="#60364a" stroke-width="5" stroke-linecap="round"/>
 <ellipse cx="198" cy="222" rx="25" ry="14" fill="url(#cheek)"/><ellipse cx="322" cy="222" rx="25" ry="14" fill="url(#cheek)"/>
 <path d="M255 194Q246 218 258 221" fill="none" stroke="#cf8e7f" stroke-width="4" stroke-linecap="round"/>
-<path d="M239 242Q260 259 282 241" fill="none" stroke="#a84968" stroke-width="5" stroke-linecap="round"/>
+<path d="M239 242Q260 259 282 241Q260 249 239 242Z" fill="#9d405f">
+ <animate attributeName="d" dur="1.15s" repeatCount="indefinite" values="M239 242Q260 259 282 241Q260 249 239 242Z;M239 239Q260 276 282 239Q260 278 239 239Z;M239 242Q260 259 282 241Q260 249 239 242Z" />
+</path>
+<path d="M242 243Q260 252 279 243" fill="none" stroke="#fff0f0" stroke-width="2" opacity=".7"/>
 <!-- hair side locks -->
 <path d="M155 170Q132 246 165 321Q175 347 192 357Q171 269 184 205Z" fill="#3a1559"/>
 <path d="M363 160Q390 249 355 328Q343 350 329 357Q350 268 337 204Z" fill="#32124f"/>
