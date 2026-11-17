@@ -1,38 +1,38 @@
-# AURIX AI
+# AURIX IA
 
-Aplicativo web instalável (PWA) da AURIX AI, em português do Brasil.
+Aplicativo web instalável (PWA) da AURIX IA, em português do Brasil.
 
-## Recursos implementados
+## Recursos
 
-- Interface de conversa responsiva.
-- Histórico local no navegador.
-- Conversas com contexto enviado ao modelo.
-- Anexos de imagens, PDF e TXT (até 3 MB por arquivo).
+- Interface roxa responsiva, com a personagem AURIX em ilustração vetorial animada.
+- Conversa com o modelo Gemini pela API protegida no servidor.
+- Respostas faladas em português pelo sintetizador de voz do navegador.
 - Ditado por voz quando o navegador oferece suporte.
-- Backend serverless em `/api/chat`; a chave do modelo nunca fica no navegador.
-- Limite inicial simples de requisições por IP para reduzir abuso.
+- Anexos de imagens, vídeos, PDFs e arquivos TXT.
+- Histórico local no navegador.
+- Menu compacto com ações adicionais.
+- PWA instalável e cache dos arquivos principais.
 
 ## Modelo de IA
 
-Integração inicial com **Gemini 3.8 Flash** pela Gemini Developer API. A página oficial de preços informa uma faixa gratuita com limites para esse modelo. Os limites podem mudar e não são ilimitados. No nível gratuito, os prompts e respostas podem ser usados para melhorar produtos do Google; não envie dados sensíveis. Consulte:
-- https://ai.google.dev/gemini-api/docs/pricing
-- https://ai.google.dev/gemini-api/docs/models
+Integração com Gemini 3.8 Flash (gemini-3.8-flash) pela Gemini Developer API. A disponibilidade, os limites, os preços e a política de dados dependem do Google e podem mudar. Consulte a [lista oficial de modelos](https://ai.google.dev/gemini-api/docs/models) e os [preços](https://ai.google.dev/gemini-api/docs/pricing).
 
-## Configuração necessária
+## Configuração
 
-1. Crie uma chave em https://aistudio.google.com/api-keys usando o nível gratuito, sem configurar faturamento.
-2. No painel do projeto Vercel, adicione a variável de ambiente `GEMINI_API_KEY` com tipo Sensitive/Encrypted nos ambientes Production, Preview e Development.
+1. Crie uma chave em [Google AI Studio](https://aistudio.google.com/api-keys).
+2. No painel Vercel do projeto, adicione GEMINI_API_KEY como variável Sensitive/Encrypted nos ambientes necessários.
 3. Faça um novo deploy.
 
-Não cole a chave no código, no GitHub ou em mensagens. Não habilite faturamento pago. O app responde com erro de configuração até a chave ser adicionada.
+Nunca coloque a chave no código do navegador, no GitHub ou em mensagens. Verifique os limites e os termos do provedor antes de disponibilizar o app ao público.
 
-## Executar
+## Publicação
 
-Publique o repositório na Vercel para que a função `/api/chat.js` funcione. Abrir o HTML diretamente como arquivo não executa o backend.
+O projeto usa funções serverless em /api e deve ser publicado na Vercel. Abrir o HTML diretamente como arquivo não executa o backend.
 
-## Limitações desta versão
+## Limitações conhecidas
 
-- Sem cadastro/login e sem sincronização de histórico entre aparelhos.
-- O histórico fica no armazenamento local do navegador.
-- Limite de requisições por IP é básico e em memória; antes de abrir ao público, implementar rate limiting compartilhado, autenticação/quotas e monitoramento.
-- O plano gratuito do provedor tem limites e política de dados próprios; não há garantia de uso ilimitado ou de equivalência com ChatGPT.
+- A personagem atual é uma ilustração vetorial animada, não um avatar 3D renderizado em tempo real.
+- A fala usa a voz disponível no navegador; não é ainda uma voz neural própria da AURIX.
+- A animação durante a fala é visual e ainda não faz sincronização labial fonema a fonema.
+- O histórico fica neste navegador/aparelho; ainda não há login nem sincronização entre dispositivos.
+- O controle de requisições atual é simples e em memória. Antes de abrir ao público, adicionar autenticação, quotas compartilhadas, proteção contra abuso e monitoramento.
