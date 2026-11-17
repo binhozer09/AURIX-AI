@@ -13,25 +13,27 @@
   <div class="app-shell">
     <header class="topbar">
       <a class="brand" href="./"><span class="brand-heart">♡</span><span>AURIX IA<small>Sua companhia virtual</small></span></a>
-      <div class="top-actions"><span class="online"><i></i> Online</span><button class="icon-button" id="menuButton" aria-label="Configurações">⚙</button></div>
+      <button class="icon-button" id="menuButton" aria-label="Abrir menu">☰</button>
     </header>
     <main class="stage">
       <div class="room-glow"></div>
       <section class="avatar-stage" aria-label="AURIX, sua companhia virtual">
         <div class="avatar-halo"></div>
-        <div class="avatar-figure" id="avatarFigure" aria-hidden="true"><span>👩🏻</span></div>
-        <div class="speech-bubble" id="speechBubble">Oi, meu bem! 💜<br>Como posso te ajudar hoje?</div>
+        <div class="avatar-figure" id="avatarFigure" aria-hidden="true">
+          <img class="avatar-art" src="./aurix-character.svg" alt="">
+        </div>
+        <div class="speech-bubble" id="speechBubble">Oi! Que bom ter você aqui. 💜</div>
         <button class="dance-button" id="danceButton"><span>♬</span> Dançar</button>
       </section>
       <section class="messages" id="messages" aria-live="polite"></section>
-      <section class="welcome" id="welcome"><span class="welcome-heart">♡</span><p>Estou aqui com você 💜</p></section>
+      <section class="welcome" id="welcome"><p>Estou aqui com você 💜</p></section>
     </main>
     <footer class="composer-wrap">
       <div class="plus-menu" id="plusMenu" aria-hidden="true">
         <button data-action="image">▧ <span>Enviar imagem</span></button>
         <button data-action="camera">◎ <span>Tirar foto</span></button>
         <button data-action="video">▣ <span>Enviar vídeo</span></button>
-        <button data-action="gift">♔ <span>Presentear</span></button>
+        <button data-action="gift">♡ <span>Enviar carinho</span></button>
         <button data-action="more">✧ <span>Mais opções</span></button>
       </div>
       <div class="composer">
@@ -39,7 +41,7 @@
         <input id="cameraInput" type="file" hidden accept="image/*" capture="environment">
         <input id="videoInput" type="file" hidden accept="video/*">
         <button class="attach-button" id="attachButton" aria-label="Mais opções">＋</button>
-        <textarea id="messageInput" rows="1" placeholder="Digite sua mensagem..." aria-label="Digite sua mensagem"></textarea>
+        <textarea id="messageInput" rows="1" placeholder="Digite para conversar..." aria-label="Digite sua mensagem"></textarea>
         <button class="voice-button" id="voiceButton" aria-label="Falar com AURIX" title="Falar com AURIX">🎙</button>
         <button class="send-button" id="sendButton" aria-label="Enviar mensagem">➤</button>
       </div>
