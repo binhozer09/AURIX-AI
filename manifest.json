@@ -1,10 +1,10 @@
 {
-  "name": "AURIX AI",
+  "name": "AURIX IA",
   "short_name": "AURIX",
-  "description": "Sua inteligência artificial em um só lugar.",
+  "description": "Sua companhia virtual inteligente.",
   "start_url": "./",
   "display": "standalone",
-  "background_color": "#090d18",
-  "theme_color": "#090d18",
+  "background_color": "#17082e",
+  "theme_color": "#17082e",
   "lang": "pt-BR"
 }
